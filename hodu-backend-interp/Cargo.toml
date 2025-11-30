@@ -1,0 +1,16 @@
+[package]
+name = "hodu-backend-interp"
+version = "0.1.0"
+description = "Interpreter backend plugin for Hodu"
+license = "BSD-3-Clause"
+authors = ["Han Damin <miniex@daminstudio.net>"]
+edition = "2021"
+publish = false
+repository = "https://github.com/daminstudio/hodu-plugins"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+hodu_cpu_kernels = { workspace = true }
+hodu_plugin_sdk = { workspace = true }
