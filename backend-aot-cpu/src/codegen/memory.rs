@@ -14,7 +14,7 @@ fn write_contiguous(code: &mut String, node: &SnapshotNode, idx: usize) -> Plugi
     let suffix = dtype_suffix(node.output_dtype);
     let inp = &node.input_layouts[0];
     let out_numel: usize = node.output_layout.shape().dims().iter().product();
-    let elem_size = node.output_dtype.get_size_in_bytes();
+    let elem_size = node.output_dtype.size_in_bytes();
 
     // Allocate output
     writeln!(code, "    t[{}] = malloc({});", node.output_id.0, out_numel * elem_size).unwrap();

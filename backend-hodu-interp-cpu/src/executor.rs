@@ -29,7 +29,7 @@ pub struct TensorStorage {
 impl TensorStorage {
     pub fn new(shape: &[usize], dtype: DType) -> Self {
         let numel: usize = shape.iter().product();
-        let size = numel * dtype.get_size_in_bytes();
+        let size = numel * dtype.size_in_bytes();
         Self {
             data: vec![0u8; size],
             shape: shape.to_vec(),

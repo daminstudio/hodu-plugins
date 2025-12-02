@@ -82,7 +82,7 @@ pub fn execute_concat(
     }
 
     // input_buffer_offsets (byte offsets divided by element size)
-    let elem_size = input_dtype.get_size_in_bytes();
+    let elem_size = input_dtype.size_in_bytes();
     for offset in &input_buffer_offsets {
         metadata.push(offset / elem_size);
     }

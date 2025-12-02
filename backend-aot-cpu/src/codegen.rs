@@ -112,7 +112,7 @@ fn write_node(code: &mut String, node: &SnapshotNode, idx: usize) -> PluginResul
     let needs_alloc = !matches!(node.op, Op::Shape(_) | Op::Memory(_));
     if needs_alloc {
         let out_numel: usize = node.output_layout.shape().dims().iter().product();
-        let elem_size = node.output_dtype.get_size_in_bytes();
+        let elem_size = node.output_dtype.size_in_bytes();
         writeln!(code, "    t[{}] = malloc({});", node.output_id.0, out_numel * elem_size).unwrap();
     }
 
