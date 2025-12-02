@@ -1,15 +1,16 @@
 //! Concat and Split operation executors
 
 use super::{get_tensor, TensorStorage};
+use hodu_cli_plugin_sdk::{op_params::OpParams, ops, snapshot::SnapshotNode, PluginError, PluginResult};
+use hodu_core::types::DType;
 use hodu_cpu_kernels::{call_ops_concat, call_ops_split, Kernel};
-use hodu_plugin_sdk::{op_params::OpParams, ops, snapshot::SnapshotNode, DType, HoduError, HoduResult};
 use std::collections::HashMap;
 
 pub fn execute_concat(
     tensors: &mut HashMap<usize, TensorStorage>,
     _op: ops::ConcatOp,
     node: &SnapshotNode,
-) -> HoduResult<()> {
+) -> PluginResult<()> {
     let out_id = node.output_id.0;
     let out_layout = &node.output_layout;
     let out_shape = out_layout.shape().dims().to_vec();
@@ -87,7 +88,7 @@ pub fn execute_concat(
     }
 
     call_ops_concat(kernel, input_ptr, output.as_mut_ptr(), &metadata)
-        .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+        .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
 
     tensors.insert(out_id, output);
     Ok(())
@@ -97,7 +98,7 @@ pub fn execute_split(
     tensors: &mut HashMap<usize, TensorStorage>,
     _op: ops::SplitOp,
     node: &SnapshotNode,
-) -> HoduResult<()> {
+) -> PluginResult<()> {
     let input_id = node.input_ids[0].0;
     let out_id = node.output_id.0;
 
@@ -154,7 +155,7 @@ pub fn execute_split(
     metadata.push(split_offset);
 
     call_ops_split(kernel, input_ptr, output.as_mut_ptr(), &metadata)
-        .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+        .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
 
     tensors.insert(out_id, output);
     Ok(())

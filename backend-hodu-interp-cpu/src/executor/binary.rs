@@ -1,15 +1,16 @@
 //! Binary operation executors
 
 use super::{build_binary_metadata, get_tensor, TensorStorage};
+use hodu_cli_plugin_sdk::{ops, snapshot::SnapshotNode, PluginError, PluginResult};
+use hodu_core::types::DType;
 use hodu_cpu_kernels::{call_ops_binary, Kernel};
-use hodu_plugin_sdk::{ops, snapshot::SnapshotNode, DType, HoduError, HoduResult};
 use std::collections::HashMap;
 
 pub fn execute_binary(
     tensors: &mut HashMap<usize, TensorStorage>,
     op: ops::BinaryOp,
     node: &SnapshotNode,
-) -> HoduResult<()> {
+) -> PluginResult<()> {
     use ops::BinaryOp;
 
     let lhs_id = node.input_ids[0].0;
@@ -38,7 +39,7 @@ pub fn execute_binary(
     let metadata = build_binary_metadata(&node.input_layouts[0], &node.input_layouts[1]);
 
     call_ops_binary(kernel, lhs_ptr, rhs_ptr, output.as_mut_ptr(), &metadata)
-        .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+        .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
 
     tensors.insert(out_id, output);
     Ok(())
@@ -48,7 +49,7 @@ pub fn execute_binary_logical(
     tensors: &mut HashMap<usize, TensorStorage>,
     op: ops::BinaryLogicalOp,
     node: &SnapshotNode,
-) -> HoduResult<()> {
+) -> PluginResult<()> {
     use ops::BinaryLogicalOp;
 
     let lhs_id = node.input_ids[0].0;
@@ -73,13 +74,17 @@ pub fn execute_binary_logical(
     let metadata = build_binary_metadata(&node.input_layouts[0], &node.input_layouts[1]);
 
     call_ops_binary(kernel, lhs_ptr, rhs_ptr, output.as_mut_ptr(), &metadata)
-        .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+        .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
 
     tensors.insert(out_id, output);
     Ok(())
 }
 
-pub fn execute_cmp(tensors: &mut HashMap<usize, TensorStorage>, op: ops::CmpOp, node: &SnapshotNode) -> HoduResult<()> {
+pub fn execute_cmp(
+    tensors: &mut HashMap<usize, TensorStorage>,
+    op: ops::CmpOp,
+    node: &SnapshotNode,
+) -> PluginResult<()> {
     use ops::CmpOp;
 
     let lhs_id = node.input_ids[0].0;
@@ -107,7 +112,7 @@ pub fn execute_cmp(tensors: &mut HashMap<usize, TensorStorage>, op: ops::CmpOp, 
     let metadata = build_binary_metadata(&node.input_layouts[0], &node.input_layouts[1]);
 
     call_ops_binary(kernel, lhs_ptr, rhs_ptr, output.as_mut_ptr(), &metadata)
-        .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+        .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
 
     tensors.insert(out_id, output);
     Ok(())

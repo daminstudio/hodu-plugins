@@ -1,15 +1,16 @@
 //! Shape operation executors
 
 use super::{build_unary_metadata, get_tensor, TensorStorage};
+use hodu_cli_plugin_sdk::{ops, snapshot::SnapshotNode, PluginError, PluginResult};
+use hodu_core::types::DType;
 use hodu_cpu_kernels::{call_ops_contiguous, Kernel};
-use hodu_plugin_sdk::{ops, snapshot::SnapshotNode, DType, HoduError, HoduResult};
 use std::collections::HashMap;
 
 pub fn execute_shape(
     tensors: &mut HashMap<usize, TensorStorage>,
     op: ops::ShapeOp,
     node: &SnapshotNode,
-) -> HoduResult<()> {
+) -> PluginResult<()> {
     use ops::ShapeOp;
 
     let input_id = node.input_ids[0].0;
@@ -21,7 +22,7 @@ pub fn execute_shape(
         ShapeOp::Reshape | ShapeOp::Flatten | ShapeOp::Squeeze | ShapeOp::Unsqueeze | ShapeOp::Broadcast => {
             // These are view operations - just copy with new shape
             let out_shape = node.output_layout.shape().dims().to_vec();
-            let output = TensorStorage::from_data(input.data.clone(), out_shape, node.output_dtype);
+            let output = TensorStorage::from_data(input.data.clone(), out_shape, node.output_dtype.into());
             tensors.insert(out_id, output);
         },
         ShapeOp::Transpose | ShapeOp::Permute => {
@@ -37,7 +38,7 @@ pub fn execute_shape_scalars(
     tensors: &mut HashMap<usize, TensorStorage>,
     op: ops::ShapeScalarsOp,
     node: &SnapshotNode,
-) -> HoduResult<()> {
+) -> PluginResult<()> {
     use ops::ShapeScalarsOp;
 
     match op {
@@ -45,7 +46,7 @@ pub fn execute_shape_scalars(
     }
 }
 
-fn execute_slice(tensors: &mut HashMap<usize, TensorStorage>, node: &SnapshotNode) -> HoduResult<()> {
+fn execute_slice(tensors: &mut HashMap<usize, TensorStorage>, node: &SnapshotNode) -> PluginResult<()> {
     let input_id = node.input_ids[0].0;
     let out_id = node.output_id.0;
 
@@ -61,13 +62,13 @@ fn execute_slice(tensors: &mut HashMap<usize, TensorStorage>, node: &SnapshotNod
     let metadata = build_unary_metadata(&node.input_layouts[0]);
 
     call_ops_contiguous(kernel, input_ptr, output.as_mut_ptr(), &metadata)
-        .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+        .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
 
     tensors.insert(out_id, output);
     Ok(())
 }
 
-fn execute_contiguous_copy(tensors: &mut HashMap<usize, TensorStorage>, node: &SnapshotNode) -> HoduResult<()> {
+fn execute_contiguous_copy(tensors: &mut HashMap<usize, TensorStorage>, node: &SnapshotNode) -> PluginResult<()> {
     let input_id = node.input_ids[0].0;
     let out_id = node.output_id.0;
 
@@ -82,7 +83,7 @@ fn execute_contiguous_copy(tensors: &mut HashMap<usize, TensorStorage>, node: &S
     let metadata = build_unary_metadata(&node.input_layouts[0]);
 
     call_ops_contiguous(kernel, input_ptr, output.as_mut_ptr(), &metadata)
-        .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+        .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
 
     tensors.insert(out_id, output);
     Ok(())

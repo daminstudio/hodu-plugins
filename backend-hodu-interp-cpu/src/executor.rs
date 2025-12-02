@@ -12,10 +12,14 @@ pub mod shape;
 pub mod unary;
 pub mod windowing;
 
-use hodu_plugin_sdk::{DType, HoduError, HoduResult, Layout, TensorData};
+use hodu_cli_plugin_sdk::{Layout, PluginError, PluginResult, SdkDType, TensorData};
+use hodu_core::types::DType;
 use std::collections::HashMap;
 
 /// Storage for tensor data during execution
+///
+/// Uses `DType` internally for compatibility with `hodu_cpu_kernels`.
+/// Converts to `SdkDType` when creating `TensorData` for FFI boundary.
 pub struct TensorStorage {
     pub data: Vec<u8>,
     pub shape: Vec<usize>,
@@ -33,8 +37,12 @@ impl TensorStorage {
         }
     }
 
-    pub fn from_data(data: Vec<u8>, shape: Vec<usize>, dtype: DType) -> Self {
-        Self { data, shape, dtype }
+    pub fn from_data(data: Vec<u8>, shape: Vec<usize>, dtype: SdkDType) -> Self {
+        Self {
+            data,
+            shape,
+            dtype: dtype.into(),
+        }
     }
 
     pub fn as_ptr(&self) -> *const std::ffi::c_void {
@@ -46,15 +54,15 @@ impl TensorStorage {
     }
 
     pub fn to_tensor_data(&self) -> TensorData {
-        TensorData::new(self.data.clone(), self.shape.clone(), self.dtype)
+        TensorData::new(self.data.clone(), self.shape.clone(), self.dtype.into())
     }
 }
 
 /// Get tensor from storage by ID
-pub fn get_tensor(tensors: &HashMap<usize, TensorStorage>, id: usize) -> HoduResult<&TensorStorage> {
+pub fn get_tensor(tensors: &HashMap<usize, TensorStorage>, id: usize) -> PluginResult<&TensorStorage> {
     tensors
         .get(&id)
-        .ok_or_else(|| HoduError::BackendError(format!("Tensor {} not found", id)))
+        .ok_or_else(|| PluginError::Execution(format!("Tensor {} not found", id)))
 }
 
 /// Build metadata for binary operations

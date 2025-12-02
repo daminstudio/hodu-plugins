@@ -1,15 +1,16 @@
 //! Matrix operation executors
 
 use super::{get_tensor, TensorStorage};
+use hodu_cli_plugin_sdk::{ops, snapshot::SnapshotNode, PluginError, PluginResult};
+use hodu_core::types::DType;
 use hodu_cpu_kernels::{call_ops_dot, call_ops_matmul, Kernel};
-use hodu_plugin_sdk::{ops, snapshot::SnapshotNode, DType, HoduError, HoduResult};
 use std::collections::HashMap;
 
 pub fn execute_matrix(
     tensors: &mut HashMap<usize, TensorStorage>,
     op: ops::MatrixOp,
     node: &SnapshotNode,
-) -> HoduResult<()> {
+) -> PluginResult<()> {
     use ops::MatrixOp;
 
     match op {
@@ -19,7 +20,7 @@ pub fn execute_matrix(
 }
 
 #[allow(clippy::vec_init_then_push)]
-fn execute_matmul(tensors: &mut HashMap<usize, TensorStorage>, node: &SnapshotNode) -> HoduResult<()> {
+fn execute_matmul(tensors: &mut HashMap<usize, TensorStorage>, node: &SnapshotNode) -> PluginResult<()> {
     let lhs_id = node.input_ids[0].0;
     let rhs_id = node.input_ids[1].0;
     let out_id = node.output_id.0;
@@ -77,13 +78,13 @@ fn execute_matmul(tensors: &mut HashMap<usize, TensorStorage>, node: &SnapshotNo
     metadata.push(n);
 
     call_ops_matmul(kernel, lhs_ptr, rhs_ptr, output.as_mut_ptr(), &metadata)
-        .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+        .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
 
     tensors.insert(out_id, output);
     Ok(())
 }
 
-fn execute_dot(tensors: &mut HashMap<usize, TensorStorage>, node: &SnapshotNode) -> HoduResult<()> {
+fn execute_dot(tensors: &mut HashMap<usize, TensorStorage>, node: &SnapshotNode) -> PluginResult<()> {
     let lhs_id = node.input_ids[0].0;
     let rhs_id = node.input_ids[1].0;
     let out_id = node.output_id.0;
@@ -126,7 +127,7 @@ fn execute_dot(tensors: &mut HashMap<usize, TensorStorage>, node: &SnapshotNode)
     ];
 
     call_ops_dot(kernel, lhs_ptr, rhs_ptr, output.as_mut_ptr(), &metadata)
-        .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+        .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
 
     tensors.insert(out_id, output);
     Ok(())

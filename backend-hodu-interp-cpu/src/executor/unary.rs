@@ -1,15 +1,16 @@
 //! Unary operation executors
 
 use super::{build_unary_metadata, get_tensor, TensorStorage};
+use hodu_cli_plugin_sdk::{op_params::OpParams, ops, snapshot::SnapshotNode, PluginError, PluginResult};
+use hodu_core::types::DType;
 use hodu_cpu_kernels::{call_ops_unary, call_ops_unary_scalar, Kernel};
-use hodu_plugin_sdk::{op_params::OpParams, ops, snapshot::SnapshotNode, DType, HoduError, HoduResult};
 use std::collections::HashMap;
 
 pub fn execute_unary(
     tensors: &mut HashMap<usize, TensorStorage>,
     op: ops::UnaryOp,
     node: &SnapshotNode,
-) -> HoduResult<()> {
+) -> PluginResult<()> {
     use ops::UnaryOp;
 
     let input_id = node.input_ids[0].0;
@@ -50,7 +51,7 @@ pub fn execute_unary(
     let metadata = build_unary_metadata(&node.input_layouts[0]);
 
     call_ops_unary(kernel, input_ptr, output.as_mut_ptr(), &metadata)
-        .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+        .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
 
     tensors.insert(out_id, output);
     Ok(())
@@ -60,7 +61,7 @@ pub fn execute_unary_logical(
     tensors: &mut HashMap<usize, TensorStorage>,
     op: ops::UnaryLogicalOp,
     node: &SnapshotNode,
-) -> HoduResult<()> {
+) -> PluginResult<()> {
     use ops::UnaryLogicalOp;
 
     let input_id = node.input_ids[0].0;
@@ -80,7 +81,7 @@ pub fn execute_unary_logical(
     let metadata = build_unary_metadata(&node.input_layouts[0]);
 
     call_ops_unary(kernel, input_ptr, output.as_mut_ptr(), &metadata)
-        .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+        .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
 
     tensors.insert(out_id, output);
     Ok(())
@@ -334,7 +335,7 @@ pub fn execute_unary_scalar(
     tensors: &mut HashMap<usize, TensorStorage>,
     op: ops::UnaryScalarOp,
     node: &SnapshotNode,
-) -> HoduResult<()> {
+) -> PluginResult<()> {
     use ops::UnaryScalarOp;
 
     let input_id = node.input_ids[0].0;
@@ -385,7 +386,7 @@ pub fn execute_cmp_scalar(
     tensors: &mut HashMap<usize, TensorStorage>,
     op: ops::CmpScalarOp,
     node: &SnapshotNode,
-) -> HoduResult<()> {
+) -> PluginResult<()> {
     use ops::CmpScalarOp;
 
     let input_id = node.input_ids[0].0;
@@ -435,53 +436,53 @@ fn call_scalar_op(
     metadata: &[usize],
     scalar_val: f64,
     dtype: DType,
-) -> HoduResult<()> {
+) -> PluginResult<()> {
     // Call the appropriate scalar kernel based on dtype
     match dtype {
         DType::F32 => {
             call_ops_unary_scalar(kernel, input, output, metadata, scalar_val as f32)
-                .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+                .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
         },
         DType::F64 => {
             call_ops_unary_scalar(kernel, input, output, metadata, scalar_val)
-                .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+                .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
         },
         DType::I32 => {
             call_ops_unary_scalar(kernel, input, output, metadata, scalar_val as i32)
-                .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+                .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
         },
         DType::I64 => {
             call_ops_unary_scalar(kernel, input, output, metadata, scalar_val as i64)
-                .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+                .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
         },
         DType::U32 => {
             call_ops_unary_scalar(kernel, input, output, metadata, scalar_val as u32)
-                .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+                .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
         },
         DType::U64 => {
             call_ops_unary_scalar(kernel, input, output, metadata, scalar_val as u64)
-                .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+                .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
         },
         DType::I8 => {
             call_ops_unary_scalar(kernel, input, output, metadata, scalar_val as i8)
-                .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+                .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
         },
         DType::I16 => {
             call_ops_unary_scalar(kernel, input, output, metadata, scalar_val as i16)
-                .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+                .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
         },
         DType::U8 => {
             call_ops_unary_scalar(kernel, input, output, metadata, scalar_val as u8)
-                .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+                .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
         },
         DType::U16 => {
             call_ops_unary_scalar(kernel, input, output, metadata, scalar_val as u16)
-                .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+                .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
         },
         _ => {
             // For other types (BF16, F16, F8), use f32 as intermediate
             call_ops_unary_scalar(kernel, input, output, metadata, scalar_val as f32)
-                .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+                .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
         },
     }
     Ok(())

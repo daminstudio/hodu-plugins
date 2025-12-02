@@ -1,15 +1,16 @@
 //! Windowing operation executors
 
 use super::{get_tensor, TensorStorage};
+use hodu_cli_plugin_sdk::{op_params::OpParams, ops, snapshot::SnapshotNode, PluginError, PluginResult};
+use hodu_core::types::DType;
 use hodu_cpu_kernels::{call_ops_reduce_window, Kernel};
-use hodu_plugin_sdk::{op_params::OpParams, ops, snapshot::SnapshotNode, DType, HoduError, HoduResult};
 use std::collections::HashMap;
 
 pub fn execute_windowing(
     tensors: &mut HashMap<usize, TensorStorage>,
     op: ops::WindowingOp,
     node: &SnapshotNode,
-) -> HoduResult<()> {
+) -> PluginResult<()> {
     use ops::WindowingOp;
 
     let kernel = match op {
@@ -26,7 +27,7 @@ fn execute_reduce_window(
     tensors: &mut HashMap<usize, TensorStorage>,
     node: &SnapshotNode,
     get_kernel: fn(DType) -> Kernel,
-) -> HoduResult<()> {
+) -> PluginResult<()> {
     let input_id = node.input_ids[0].0;
     let out_id = node.output_id.0;
 
@@ -45,15 +46,15 @@ fn execute_reduce_window(
     let metadata = build_reduce_window_metadata(input_layout, out_layout, &node.params);
 
     call_ops_reduce_window(kernel, input_ptr, output.as_mut_ptr(), &metadata)
-        .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+        .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
 
     tensors.insert(out_id, output);
     Ok(())
 }
 
 fn build_reduce_window_metadata(
-    input_layout: &hodu_plugin_sdk::Layout,
-    output_layout: &hodu_plugin_sdk::Layout,
+    input_layout: &hodu_cli_plugin_sdk::Layout,
+    output_layout: &hodu_cli_plugin_sdk::Layout,
     params: &Option<OpParams>,
 ) -> Vec<usize> {
     let num_dims = input_layout.ndim();

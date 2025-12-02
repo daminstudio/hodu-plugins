@@ -1,0 +1,23 @@
+[package]
+name = "hodu-cli-plugin-backend-aot-cpu"
+version = "0.1.0"
+description = "AOT CPU backend plugin for Hodu - compiles snapshots to native code via C"
+license = "BSD-3-Clause"
+authors = ["Han Damin <miniex@daminstudio.net>"]
+edition = "2021"
+publish = false
+repository = "https://github.com/daminstudio/hodu-plugins"
+
+[lib]
+crate-type = ["cdylib"]
+
+[build-dependencies]
+hodu-cli-plugin-sdk = { path = "../../hodu/hodu-cli-plugin-sdk" }
+
+[dependencies]
+cc = "1.2.48"
+hodu_core = { path = "../../hodu/crates/hodu_core" }
+hodu_cpu_kernels = { path = "../../hodu/crates/hodu_cpu_kernels" }
+hodu-cli-plugin-sdk = { path = "../../hodu/hodu-cli-plugin-sdk" }
+libc = "0.2.177"
+libloading = "0.9.0"

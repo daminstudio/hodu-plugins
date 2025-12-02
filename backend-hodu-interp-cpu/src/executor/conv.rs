@@ -1,15 +1,16 @@
 //! Convolution operation executors
 
 use super::{get_tensor, TensorStorage};
+use hodu_cli_plugin_sdk::{op_params::OpParams, ops, snapshot::SnapshotNode, PluginError, PluginResult};
+use hodu_core::types::DType;
 use hodu_cpu_kernels::{call_ops_conv, call_ops_conv_grad_weight, Kernel};
-use hodu_plugin_sdk::{op_params::OpParams, ops, snapshot::SnapshotNode, DType, HoduError, HoduResult};
 use std::collections::HashMap;
 
 pub fn execute_conv(
     tensors: &mut HashMap<usize, TensorStorage>,
     op: ops::ConvOp,
     node: &SnapshotNode,
-) -> HoduResult<()> {
+) -> PluginResult<()> {
     use ops::ConvOp;
 
     match op {
@@ -33,7 +34,7 @@ fn execute_conv_nd(
     node: &SnapshotNode,
     spatial_dims: usize,
     transpose: bool,
-) -> HoduResult<()> {
+) -> PluginResult<()> {
     let input_id = node.input_ids[0].0;
     let weight_id = node.input_ids[1].0;
     let out_id = node.output_id.0;
@@ -63,7 +64,7 @@ fn execute_conv_nd(
     );
 
     call_ops_conv(kernel, input_ptr, weight_ptr, output.as_mut_ptr(), &metadata)
-        .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+        .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
 
     tensors.insert(out_id, output);
     Ok(())
@@ -74,7 +75,7 @@ fn execute_conv_grad_weight(
     node: &SnapshotNode,
     spatial_dims: usize,
     transpose: bool,
-) -> HoduResult<()> {
+) -> PluginResult<()> {
     let input_id = node.input_ids[0].0;
     let grad_output_id = node.input_ids[1].0;
     let out_id = node.output_id.0;
@@ -102,7 +103,7 @@ fn execute_conv_grad_weight(
     );
 
     call_ops_conv_grad_weight(kernel, input_ptr, grad_output_ptr, output.as_mut_ptr(), &metadata)
-        .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+        .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
 
     tensors.insert(out_id, output);
     Ok(())
@@ -224,9 +225,9 @@ fn build_conv_metadata_from_params(
 }
 
 fn build_conv_grad_weight_metadata_from_params(
-    input_layout: &hodu_plugin_sdk::Layout,
-    grad_output_layout: &hodu_plugin_sdk::Layout,
-    weight_layout: &hodu_plugin_sdk::Layout,
+    input_layout: &hodu_cli_plugin_sdk::Layout,
+    grad_output_layout: &hodu_cli_plugin_sdk::Layout,
+    weight_layout: &hodu_cli_plugin_sdk::Layout,
     params: &Option<OpParams>,
     spatial_dims: usize,
 ) -> Vec<usize> {

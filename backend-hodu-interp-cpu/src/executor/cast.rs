@@ -1,15 +1,16 @@
 //! Cast operation executors
 
 use super::{build_unary_metadata, get_tensor, TensorStorage};
+use hodu_cli_plugin_sdk::{ops, snapshot::SnapshotNode, PluginError, PluginResult};
+use hodu_core::types::DType;
 use hodu_cpu_kernels::{call_ops_cast, CastKernel};
-use hodu_plugin_sdk::{ops, snapshot::SnapshotNode, DType, HoduError, HoduResult};
 use std::collections::HashMap;
 
 pub fn execute_cast(
     tensors: &mut HashMap<usize, TensorStorage>,
     op: ops::CastOp,
     node: &SnapshotNode,
-) -> HoduResult<()> {
+) -> PluginResult<()> {
     use ops::CastOp;
 
     match op {
@@ -17,7 +18,7 @@ pub fn execute_cast(
     }
 }
 
-fn execute_to_dtype(tensors: &mut HashMap<usize, TensorStorage>, node: &SnapshotNode) -> HoduResult<()> {
+fn execute_to_dtype(tensors: &mut HashMap<usize, TensorStorage>, node: &SnapshotNode) -> PluginResult<()> {
     let input_id = node.input_ids[0].0;
     let out_id = node.output_id.0;
 
@@ -33,7 +34,7 @@ fn execute_to_dtype(tensors: &mut HashMap<usize, TensorStorage>, node: &Snapshot
     let metadata = build_unary_metadata(&node.input_layouts[0]);
 
     call_ops_cast(kernel, input_ptr, output.as_mut_ptr(), &metadata)
-        .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+        .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
 
     tensors.insert(out_id, output);
     Ok(())

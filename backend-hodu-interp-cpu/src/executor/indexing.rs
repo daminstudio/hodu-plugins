@@ -1,15 +1,16 @@
 //! Indexing operation executors
 
 use super::{get_tensor, TensorStorage};
+use hodu_cli_plugin_sdk::{op_params::OpParams, ops, snapshot::SnapshotNode, PluginError, PluginResult};
+use hodu_core::types::DType;
 use hodu_cpu_kernels::{call_ops_gather, call_ops_index_select, call_ops_scatter, Kernel};
-use hodu_plugin_sdk::{op_params::OpParams, ops, snapshot::SnapshotNode, DType, HoduError, HoduResult};
 use std::collections::HashMap;
 
 pub fn execute_indexing(
     tensors: &mut HashMap<usize, TensorStorage>,
     op: ops::IndexingOp,
     node: &SnapshotNode,
-) -> HoduResult<()> {
+) -> PluginResult<()> {
     use ops::IndexingOp;
 
     match op {
@@ -41,7 +42,7 @@ fn get_dim_from_params(node: &SnapshotNode, num_dims: usize) -> usize {
     }
 }
 
-fn execute_index_select(tensors: &mut HashMap<usize, TensorStorage>, node: &SnapshotNode) -> HoduResult<()> {
+fn execute_index_select(tensors: &mut HashMap<usize, TensorStorage>, node: &SnapshotNode) -> PluginResult<()> {
     let input_id = node.input_ids[0].0;
     let indices_id = node.input_ids[1].0;
     let out_id = node.output_id.0;
@@ -72,13 +73,13 @@ fn execute_index_select(tensors: &mut HashMap<usize, TensorStorage>, node: &Snap
     metadata.push(num_indices);
 
     call_ops_index_select(kernel, input_ptr, indices_ptr, output.as_mut_ptr(), &metadata)
-        .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+        .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
 
     tensors.insert(out_id, output);
     Ok(())
 }
 
-fn execute_index_put(tensors: &mut HashMap<usize, TensorStorage>, node: &SnapshotNode) -> HoduResult<()> {
+fn execute_index_put(tensors: &mut HashMap<usize, TensorStorage>, node: &SnapshotNode) -> PluginResult<()> {
     let input_id = node.input_ids[0].0;
     let indices_id = node.input_ids[1].0;
     let values_id = node.input_ids[2].0;
@@ -122,13 +123,13 @@ fn execute_index_put(tensors: &mut HashMap<usize, TensorStorage>, node: &Snapsho
         output.as_mut_ptr(),
         &metadata,
     )
-    .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+    .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
 
     tensors.insert(out_id, output);
     Ok(())
 }
 
-fn execute_gather(tensors: &mut HashMap<usize, TensorStorage>, node: &SnapshotNode) -> HoduResult<()> {
+fn execute_gather(tensors: &mut HashMap<usize, TensorStorage>, node: &SnapshotNode) -> PluginResult<()> {
     let input_id = node.input_ids[0].0;
     let indices_id = node.input_ids[1].0;
     let out_id = node.output_id.0;
@@ -162,13 +163,17 @@ fn execute_gather(tensors: &mut HashMap<usize, TensorStorage>, node: &SnapshotNo
     metadata.push(indices_len);
 
     call_ops_gather(kernel, input_ptr, indices_ptr, output.as_mut_ptr(), &metadata)
-        .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+        .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
 
     tensors.insert(out_id, output);
     Ok(())
 }
 
-fn execute_scatter(tensors: &mut HashMap<usize, TensorStorage>, node: &SnapshotNode, op_name: &str) -> HoduResult<()> {
+fn execute_scatter(
+    tensors: &mut HashMap<usize, TensorStorage>,
+    node: &SnapshotNode,
+    op_name: &str,
+) -> PluginResult<()> {
     let input_id = node.input_ids[0].0;
     let indices_id = node.input_ids[1].0;
     let src_id = node.input_ids[2].0;
@@ -207,7 +212,7 @@ fn execute_scatter(tensors: &mut HashMap<usize, TensorStorage>, node: &SnapshotN
     metadata.push(dim);
 
     call_ops_scatter(kernel, input_ptr, indices_ptr, src_ptr, output.as_mut_ptr(), &metadata)
-        .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+        .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
 
     tensors.insert(out_id, output);
     Ok(())

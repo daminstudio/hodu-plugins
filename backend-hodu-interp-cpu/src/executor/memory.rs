@@ -1,15 +1,16 @@
 //! Memory operation executors
 
 use super::{build_unary_metadata, get_tensor, TensorStorage};
+use hodu_cli_plugin_sdk::{ops, snapshot::SnapshotNode, PluginError, PluginResult};
+use hodu_core::types::DType;
 use hodu_cpu_kernels::{call_ops_contiguous, Kernel};
-use hodu_plugin_sdk::{ops, snapshot::SnapshotNode, DType, HoduError, HoduResult};
 use std::collections::HashMap;
 
 pub fn execute_memory(
     tensors: &mut HashMap<usize, TensorStorage>,
     op: ops::MemoryOp,
     node: &SnapshotNode,
-) -> HoduResult<()> {
+) -> PluginResult<()> {
     use ops::MemoryOp;
 
     match op {
@@ -17,7 +18,7 @@ pub fn execute_memory(
     }
 }
 
-fn execute_contiguous(tensors: &mut HashMap<usize, TensorStorage>, node: &SnapshotNode) -> HoduResult<()> {
+fn execute_contiguous(tensors: &mut HashMap<usize, TensorStorage>, node: &SnapshotNode) -> PluginResult<()> {
     let input_id = node.input_ids[0].0;
     let out_id = node.output_id.0;
 
@@ -32,7 +33,7 @@ fn execute_contiguous(tensors: &mut HashMap<usize, TensorStorage>, node: &Snapsh
     let metadata = build_unary_metadata(&node.input_layouts[0]);
 
     call_ops_contiguous(kernel, input_ptr, output.as_mut_ptr(), &metadata)
-        .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+        .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
 
     tensors.insert(out_id, output);
     Ok(())

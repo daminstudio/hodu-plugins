@@ -1,7 +1,3 @@
 [workspace]
-members = ["hodu-backend-interp"]
+members = ["backend-hodu-interp-cpu", "backend-aot-cpu"]
 resolver = "2"
-
-[workspace.dependencies]
-hodu_cpu_kernels = { path = "../hodu/crates/hodu_cpu_kernels" }
-hodu_plugin_sdk = { path = "../hodu/crates/hodu_plugin_sdk" }

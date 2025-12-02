@@ -1,15 +1,16 @@
 //! Reduce operation executors
 
 use super::{get_tensor, TensorStorage};
+use hodu_cli_plugin_sdk::{op_params::OpParams, ops, snapshot::SnapshotNode, Layout, PluginError, PluginResult};
+use hodu_core::types::DType;
 use hodu_cpu_kernels::{call_ops_reduce, Kernel};
-use hodu_plugin_sdk::{op_params::OpParams, ops, snapshot::SnapshotNode, DType, HoduError, HoduResult, Layout};
 use std::collections::HashMap;
 
 pub fn execute_reduce(
     tensors: &mut HashMap<usize, TensorStorage>,
     op: ops::ReduceOp,
     node: &SnapshotNode,
-) -> HoduResult<()> {
+) -> PluginResult<()> {
     use ops::ReduceOp;
 
     let input_id = node.input_ids[0].0;
@@ -43,7 +44,7 @@ pub fn execute_reduce(
     let metadata = build_reduce_metadata(input_layout, out_layout, &node.params);
 
     call_ops_reduce(kernel, input_ptr, output.as_mut_ptr(), &metadata)
-        .map_err(|e| HoduError::BackendError(format!("Kernel error: {:?}", e)))?;
+        .map_err(|e| PluginError::Execution(format!("Kernel error: {:?}", e)))?;
 
     tensors.insert(out_id, output);
     Ok(())
