@@ -1,0 +1,8 @@
+# Hodu Official Plugin Registry
+# This file is used by `hodu plugin install <name>` to find plugins.
+
+[[plugin]]
+name = "aot-cpu"
+description = "AOT compiler for CPU via C code generation"
+git = "https://github.com/daminstudio/hodu-plugins"
+path = "hodu-backend-aot-cpu-plugin"
