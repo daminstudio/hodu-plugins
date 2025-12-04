@@ -45,7 +45,7 @@ fn handle_run(params: RunParams) -> Result<RunResult, RpcError> {
 
     notify_progress(Some(0), "Loading snapshot...");
 
-    // Load snapshot
+    // Load snapshot (needed for input/output metadata)
     let snapshot = hdss::load(&params.snapshot_path)
         .map_err(|e| RpcError::internal_error(format!("Failed to load snapshot: {}", e)))?;
 
@@ -60,7 +60,7 @@ fn handle_run(params: RunParams) -> Result<RunResult, RpcError> {
         input_tensors.push((input.name.clone(), tensor));
     }
 
-    // Convert to the format expected by run_model
+    // Convert to the format expected by execute_model
     for (name, tensor) in &input_tensors {
         let data = tensor
             .to_bytes()
@@ -68,10 +68,10 @@ fn handle_run(params: RunParams) -> Result<RunResult, RpcError> {
         inputs.push((name.as_str(), data));
     }
 
-    notify_progress(Some(20), "Compiling model...");
+    notify_progress(Some(20), "Executing model...");
 
-    // Run the model
-    let results = run_model(&snapshot, &inputs)?;
+    // Execute the model using pre-compiled library
+    let results = execute_model(&snapshot, &params.library_path, &inputs)?;
 
     notify_progress(Some(80), "Saving output tensors...");
 
@@ -153,36 +153,14 @@ fn handle_build(params: BuildParams) -> Result<serde_json::Value, RpcError> {
 
 type TensorResult = (Vec<u8>, Vec<usize>, DType);
 
-/// Run the model by compiling to a shared library and executing
-fn run_model(snapshot: &Snapshot, inputs: &[(&str, Vec<u8>)]) -> Result<HashMap<String, TensorResult>, RpcError> {
-    // Build to temp shared library
-    let temp_dir = std::env::temp_dir().join("hodu_aot_run");
-    std::fs::create_dir_all(&temp_dir)
-        .map_err(|e| RpcError::internal_error(format!("Failed to create temp dir: {}", e)))?;
-
-    let lib_ext = if cfg!(target_os = "macos") {
-        "dylib"
-    } else if cfg!(target_os = "windows") {
-        "dll"
-    } else {
-        "so"
-    };
-    let lib_path = temp_dir.join(format!("model.{}", lib_ext));
-
-    // Generate and compile
-    let c_code =
-        codegen::generate(snapshot).map_err(|e| RpcError::internal_error(format!("Code generation failed: {}", e)))?;
-
-    let target = compile::BuildTarget {
-        triple: current_target_triple(),
-        device: "cpu".to_string(),
-    };
-
-    compile::compile(&c_code, &target, compile::BuildFormat::SharedLib, &lib_path)
-        .map_err(|e| RpcError::internal_error(format!("Compilation failed: {}", e)))?;
-
+/// Execute the model using a pre-compiled shared library
+fn execute_model(
+    snapshot: &Snapshot,
+    library_path: &str,
+    inputs: &[(&str, Vec<u8>)],
+) -> Result<HashMap<String, TensorResult>, RpcError> {
     // Load the library
-    let lib = unsafe { libloading::Library::new(&lib_path) }
+    let lib = unsafe { libloading::Library::new(library_path) }
         .map_err(|e| RpcError::internal_error(format!("Failed to load library: {}", e)))?;
 
     // Get model function name
@@ -255,10 +233,6 @@ fn run_model(snapshot: &Snapshot, inputs: &[(&str, Vec<u8>)]) -> Result<HashMap<
         results.insert(target.name.clone(), (data, shape.clone(), *dtype));
     }
 
-    // Cleanup: drop library first, then delete temp files
-    drop(lib);
-    let _ = std::fs::remove_dir_all(&temp_dir);
-
     Ok(results)
 }
 
@@ -285,25 +259,4 @@ fn build_output_info(snapshot: &Snapshot) -> HashMap<usize, (Vec<usize>, DType)>
     }
 
     info
-}
-
-fn current_target_triple() -> String {
-    #[cfg(all(target_arch = "x86_64", target_os = "linux"))]
-    return "x86_64-unknown-linux-gnu".to_string();
-    #[cfg(all(target_arch = "aarch64", target_os = "linux"))]
-    return "aarch64-unknown-linux-gnu".to_string();
-    #[cfg(all(target_arch = "x86_64", target_os = "macos"))]
-    return "x86_64-apple-darwin".to_string();
-    #[cfg(all(target_arch = "aarch64", target_os = "macos"))]
-    return "aarch64-apple-darwin".to_string();
-    #[cfg(all(target_arch = "x86_64", target_os = "windows"))]
-    return "x86_64-pc-windows-msvc".to_string();
-    #[cfg(not(any(
-        all(target_arch = "x86_64", target_os = "linux"),
-        all(target_arch = "aarch64", target_os = "linux"),
-        all(target_arch = "x86_64", target_os = "macos"),
-        all(target_arch = "aarch64", target_os = "macos"),
-        all(target_arch = "x86_64", target_os = "windows"),
-    )))]
-    return String::new();
 }

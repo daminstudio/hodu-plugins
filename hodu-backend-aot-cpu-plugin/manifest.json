@@ -1,6 +1,6 @@
 {
   "name": "aot-cpu",
-  "version": "0.1.1",
+  "version": "0.1.0",
   "description": "AOT compiler for CPU via C code generation",
   "license": "BSD-3-Clause",
   "sdk_version": "0.1.0",
