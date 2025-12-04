@@ -6,3 +6,6 @@ name = "aot-cpu"
 description = "AOT compiler for CPU via C code generation"
 git = "https://github.com/daminstudio/hodu-plugins"
 path = "hodu-backend-aot-cpu-plugin"
+versions = [
+  { version = "0.1.0", tag = "aot-cpu-v0.1.0" },
+]
