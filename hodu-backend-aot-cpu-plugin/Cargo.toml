@@ -14,8 +14,8 @@ path = "src/main.rs"
 
 [dependencies]
 cc = "1.2.48"
-hodu_cpu_kernels = { git = "https://github.com/daminstudio/hodu", path = "crates/hodu_cpu_kernels" }
-hodu-plugin-sdk = { git = "https://github.com/daminstudio/hodu", path = "hodu-plugin-sdk" }
+hodu_cpu_kernels = { git = "https://github.com/daminstudio/hodu" }
+hodu-plugin-sdk = { git = "https://github.com/daminstudio/hodu" }
 libc = "0.2.177"
 libloading = "0.9.0"
 serde_json = "1.0"
