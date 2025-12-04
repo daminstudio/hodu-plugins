@@ -1,7 +1,7 @@
 //! Reduce operation codegen
 
 use super::{dtype_suffix, write_metadata};
-use hodu_cli_plugin_sdk::{op_params::OpParams, ops::ReduceOp, snapshot::SnapshotNode, PluginResult};
+use hodu_plugin_sdk::{op_params::OpParams, ops::ReduceOp, snapshot::SnapshotNode, PluginResult};
 use std::fmt::Write;
 
 pub fn write(code: &mut String, node: &SnapshotNode, idx: usize, op: ReduceOp) -> PluginResult<()> {

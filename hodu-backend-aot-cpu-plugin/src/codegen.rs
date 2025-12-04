@@ -12,8 +12,7 @@ mod shape;
 mod unary;
 mod windowing;
 
-use hodu_cli_plugin_sdk::{ops::Op, snapshot::SnapshotNode, PluginResult, Snapshot};
-use hodu_core::types::DType;
+use hodu_plugin_sdk::{ops::Op, snapshot::SnapshotNode, DType, PluginResult, Snapshot};
 use std::fmt::Write;
 
 pub fn generate(snapshot: &Snapshot) -> PluginResult<String> {

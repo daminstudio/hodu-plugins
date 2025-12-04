@@ -1,7 +1,7 @@
 //! Unary operation codegen
 
 use super::{dtype_suffix, write_metadata};
-use hodu_cli_plugin_sdk::{
+use hodu_plugin_sdk::{
     ops::{CmpScalarOp, UnaryLogicalOp, UnaryOp, UnaryScalarOp},
     snapshot::SnapshotNode,
     PluginResult,
@@ -100,7 +100,7 @@ fn write_unary_scalar_call(code: &mut String, node: &SnapshotNode, idx: usize, o
         .params
         .as_ref()
         .and_then(|p| {
-            use hodu_cli_plugin_sdk::op_params::OpParams;
+            use hodu_plugin_sdk::op_params::OpParams;
             match p {
                 OpParams::UnaryScalar(s) => Some(s.scalar.to_f64()),
                 _ => None,

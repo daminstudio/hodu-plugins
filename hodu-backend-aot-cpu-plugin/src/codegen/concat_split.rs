@@ -1,7 +1,7 @@
 //! Concat and Split operation codegen
 
 use super::{dtype_suffix, write_metadata};
-use hodu_cli_plugin_sdk::{
+use hodu_plugin_sdk::{
     op_params::OpParams,
     ops::{ConcatOp, SplitOp},
     snapshot::SnapshotNode,
@@ -41,9 +41,7 @@ pub fn write_concat(code: &mut String, node: &SnapshotNode, idx: usize, _op: Con
     for inp in &node.input_layouts {
         meta.push(inp.offset());
     }
-    for _ in 0..num_inputs {
-        meta.push(0); // buffer offsets (0 for separate tensors)
-    }
+    meta.extend(std::iter::repeat_n(0, num_inputs)); // buffer offsets (0 for separate tensors)
 
     write_metadata(code, &format!("m{}", idx), &meta);
 

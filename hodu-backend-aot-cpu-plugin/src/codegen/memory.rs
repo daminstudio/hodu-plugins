@@ -1,7 +1,7 @@
 //! Memory operation codegen
 
 use super::{dtype_suffix, write_metadata};
-use hodu_cli_plugin_sdk::{ops::MemoryOp, snapshot::SnapshotNode, PluginResult};
+use hodu_plugin_sdk::{ops::MemoryOp, snapshot::SnapshotNode, PluginResult};
 use std::fmt::Write;
 
 pub fn write(code: &mut String, node: &SnapshotNode, idx: usize, op: MemoryOp) -> PluginResult<()> {

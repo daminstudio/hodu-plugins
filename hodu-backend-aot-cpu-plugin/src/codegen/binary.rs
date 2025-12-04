@@ -1,7 +1,7 @@
 //! Binary operation codegen
 
 use super::{dtype_suffix, write_metadata};
-use hodu_cli_plugin_sdk::{
+use hodu_plugin_sdk::{
     ops::{BinaryLogicalOp, BinaryOp, CmpOp},
     snapshot::SnapshotNode,
     PluginResult,

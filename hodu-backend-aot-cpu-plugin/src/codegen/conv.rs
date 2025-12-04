@@ -1,7 +1,7 @@
 //! Convolution operation codegen
 
 use super::{dtype_suffix, write_metadata};
-use hodu_cli_plugin_sdk::{op_params::OpParams, ops::ConvOp, snapshot::SnapshotNode, PluginResult};
+use hodu_plugin_sdk::{op_params::OpParams, ops::ConvOp, snapshot::SnapshotNode, PluginResult};
 use std::fmt::Write;
 
 pub fn write(code: &mut String, node: &SnapshotNode, idx: usize, op: ConvOp) -> PluginResult<()> {
