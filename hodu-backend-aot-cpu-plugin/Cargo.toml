@@ -1,6 +1,6 @@
 [package]
 name = "hodu-backend-aot-cpu-plugin"
-version = "0.1.0"
+version = "0.1.1"
 description = "AOT CPU backend plugin for Hodu - compiles snapshots to native code via C"
 license = "BSD-3-Clause"
 authors = ["Han Damin <miniex@daminstudio.net>"]

@@ -1,7 +1,10 @@
 {
-    "name": "aot-cpu",
-    "version": "0.1.0",
-    "sdk_version": "0.1.0",
-    "capabilities": ["backend.run", "backend.build"],
-    "devices": ["cpu"]
+  "name": "aot-cpu",
+  "version": "0.1.1",
+  "description": "AOT compiler for CPU via C code generation",
+  "license": "BSD-3-Clause",
+  "sdk_version": "0.1.0",
+  "capabilities": ["backend.run", "backend.build"],
+  "devices": ["cpu"],
+  "dependencies": []
 }
