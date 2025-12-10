@@ -1,9 +1,10 @@
 //! C code compilation using cc crate with cross-compilation support
 
-use hodu_plugin_sdk::{PluginError, PluginResult};
+use hodu_plugin_sdk::{current_host_triple, PluginError, PluginManifest, PluginResult};
 use std::io::Write as IoWrite;
 use std::path::Path;
 use std::process::Command;
+use std::sync::OnceLock;
 
 #[derive(Debug, Clone, Copy)]
 pub enum BuildFormat {
@@ -20,62 +21,44 @@ pub struct BuildTarget {
     pub device: String,
 }
 
-/// Supported cross-compilation targets
-pub const SUPPORTED_TARGETS: &[&str] = &[
-    // Desktop/Server
-    "x86_64-unknown-linux-gnu",
-    "aarch64-unknown-linux-gnu",
-    "x86_64-apple-darwin",
-    "aarch64-apple-darwin",
-    "x86_64-pc-windows-msvc",
-    // Embedded - ARM Cortex-M
-    "thumbv6m-none-eabi",    // Cortex-M0, M0+
-    "thumbv7m-none-eabi",    // Cortex-M3
-    "thumbv7em-none-eabi",   // Cortex-M4, M7 (no FPU)
-    "thumbv7em-none-eabihf", // Cortex-M4F, M7F (with FPU)
-    // Embedded - ARM Cortex-A (bare metal)
-    "aarch64-unknown-none",
-    "armv7a-none-eabi",
-    // Embedded - RISC-V
-    "riscv32imac-unknown-none-elf",
-    "riscv64gc-unknown-none-elf",
-];
+/// Cached manifest
+static MANIFEST: OnceLock<PluginManifest> = OnceLock::new();
 
-/// Check if a target is supported
-pub fn is_supported_target(target: &str) -> bool {
-    SUPPORTED_TARGETS.contains(&target)
+/// Get or load manifest
+fn get_manifest() -> &'static PluginManifest {
+    MANIFEST.get_or_init(|| PluginManifest::load().unwrap_or_default())
 }
 
-/// Get list of supported targets as formatted string
-pub fn list_supported_targets() -> String {
-    let mut result = String::new();
-    result.push_str("Desktop/Server:\n");
-    for t in SUPPORTED_TARGETS.iter().take(5) {
-        result.push_str(&format!("  {}\n", t));
+/// Check if build is possible for target and return error if not
+pub fn check_can_build(target_triple: &str) -> PluginResult<()> {
+    let manifest = get_manifest();
+    let cap = manifest.check_target(target_triple);
+
+    if !cap.can_build {
+        let reason = cap.reason.unwrap_or_default();
+        let missing = if cap.missing_tools.is_empty() {
+            String::new()
+        } else {
+            format!("\n\nMissing tools: {}", cap.missing_tools.join(", "))
+        };
+
+        return Err(PluginError::NotSupported(format!(
+            "Cannot build for target '{}' from host '{}'.\n\nReason: {}{}\n\nSupported targets:\n{}",
+            target_triple,
+            current_host_triple(),
+            reason,
+            missing,
+            manifest.format_targets()
+        )));
     }
-    result.push_str("\nEmbedded - ARM Cortex-M:\n");
-    for t in SUPPORTED_TARGETS.iter().skip(5).take(4) {
-        result.push_str(&format!("  {}\n", t));
-    }
-    result.push_str("\nEmbedded - ARM Cortex-A:\n");
-    for t in SUPPORTED_TARGETS.iter().skip(9).take(2) {
-        result.push_str(&format!("  {}\n", t));
-    }
-    result.push_str("\nEmbedded - RISC-V:\n");
-    for t in SUPPORTED_TARGETS.iter().skip(11) {
-        result.push_str(&format!("  {}\n", t));
-    }
-    result
+
+    Ok(())
 }
 
 pub fn compile(c_code: &str, target: &BuildTarget, format: BuildFormat, output: &Path) -> PluginResult<()> {
-    // Validate target
-    if !target.triple.is_empty() && !is_supported_target(&target.triple) {
-        return Err(PluginError::NotSupported(format!(
-            "Unsupported target: '{}'\n\nSupported targets:\n{}",
-            target.triple,
-            list_supported_targets()
-        )));
+    // Check if build is possible for this target
+    if !target.triple.is_empty() {
+        check_can_build(&target.triple)?;
     }
 
     let kernels_dir = hodu_cpu_kernels::KERNELS_DIR;
@@ -114,27 +97,6 @@ pub fn compile(c_code: &str, target: &BuildTarget, format: BuildFormat, output: 
         ),
         BuildFormat::Object => compile_object(kernels_dir, &model_c, target, &cross_compiler, output),
     }
-}
-
-fn current_host_triple() -> &'static str {
-    #[cfg(all(target_arch = "x86_64", target_os = "linux"))]
-    return "x86_64-unknown-linux-gnu";
-    #[cfg(all(target_arch = "aarch64", target_os = "linux"))]
-    return "aarch64-unknown-linux-gnu";
-    #[cfg(all(target_arch = "x86_64", target_os = "macos"))]
-    return "x86_64-apple-darwin";
-    #[cfg(all(target_arch = "aarch64", target_os = "macos"))]
-    return "aarch64-apple-darwin";
-    #[cfg(all(target_arch = "x86_64", target_os = "windows"))]
-    return "x86_64-pc-windows-msvc";
-    #[cfg(not(any(
-        all(target_arch = "x86_64", target_os = "linux"),
-        all(target_arch = "aarch64", target_os = "linux"),
-        all(target_arch = "x86_64", target_os = "macos"),
-        all(target_arch = "aarch64", target_os = "macos"),
-        all(target_arch = "x86_64", target_os = "windows"),
-    )))]
-    return "unknown";
 }
 
 /// Cross-compiler configuration

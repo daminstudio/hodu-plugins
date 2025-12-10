@@ -1,0 +1,12 @@
+{
+    "presets": {
+        "recommended": {
+            "description": "Recommended plugins for most users",
+            "plugins": ["aot-cpu"]
+        },
+        "minimal": {
+            "description": "Minimal setup with core plugins only",
+            "plugins": []
+        }
+    }
+}

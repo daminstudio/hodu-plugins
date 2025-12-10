@@ -3,8 +3,65 @@
   "version": "0.1.0",
   "description": "AOT compiler for CPU via C code generation",
   "license": "BSD-3-Clause",
-  "sdk_version": "0.1.0",
+  "plugin_version": "0.3.0",
   "capabilities": ["backend.run", "backend.build"],
   "devices": ["cpu"],
-  "dependencies": []
+  "dependencies": [],
+  "supported_targets": [
+    {
+      "triple": "x86_64-unknown-linux-gnu",
+      "requires": ["clang|gcc"]
+    },
+    {
+      "triple": "aarch64-unknown-linux-gnu",
+      "requires": ["clang|gcc|aarch64-linux-gnu-gcc"]
+    },
+    {
+      "triple": "x86_64-apple-darwin",
+      "requires": ["clang"],
+      "host_only": ["*-apple-darwin"]
+    },
+    {
+      "triple": "aarch64-apple-darwin",
+      "requires": ["clang"],
+      "host_only": ["*-apple-darwin"]
+    },
+    {
+      "triple": "x86_64-pc-windows-msvc",
+      "requires": ["cl|clang"],
+      "host_only": ["*-windows-*"]
+    },
+    {
+      "triple": "thumbv6m-none-eabi",
+      "requires": ["arm-none-eabi-gcc|clang|zig"]
+    },
+    {
+      "triple": "thumbv7m-none-eabi",
+      "requires": ["arm-none-eabi-gcc|clang|zig"]
+    },
+    {
+      "triple": "thumbv7em-none-eabi",
+      "requires": ["arm-none-eabi-gcc|clang|zig"]
+    },
+    {
+      "triple": "thumbv7em-none-eabihf",
+      "requires": ["arm-none-eabi-gcc|clang|zig"]
+    },
+    {
+      "triple": "aarch64-unknown-none",
+      "requires": ["aarch64-none-elf-gcc|clang|zig"]
+    },
+    {
+      "triple": "armv7a-none-eabi",
+      "requires": ["arm-none-eabi-gcc|clang|zig"]
+    },
+    {
+      "triple": "riscv32imac-unknown-none-elf",
+      "requires": ["riscv32-unknown-elf-gcc|clang|zig"]
+    },
+    {
+      "triple": "riscv64gc-unknown-none-elf",
+      "requires": ["riscv64-unknown-elf-gcc|clang|zig"]
+    }
+  ]
 }

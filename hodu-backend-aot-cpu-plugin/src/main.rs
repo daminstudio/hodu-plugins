@@ -9,7 +9,7 @@ use hodu_plugin_sdk::{
     hdss, hdt, notify_progress,
     rpc::{BuildParams, RpcError, RunParams, RunResult, TensorOutput},
     server::PluginServer,
-    CoreDevice, DType, Snapshot, Tensor,
+    CoreDevice, DType, PluginManifest, Snapshot, Tensor,
 };
 use std::collections::HashMap;
 use std::path::Path;
@@ -28,9 +28,12 @@ fn main() {
 }
 
 fn handle_list_targets(_params: serde_json::Value) -> Result<serde_json::Value, RpcError> {
+    let manifest = PluginManifest::load().unwrap_or_default();
+    let targets: Vec<&str> = manifest.supported_targets.iter().map(|t| t.triple.as_str()).collect();
+
     Ok(serde_json::json!({
-        "targets": compile::SUPPORTED_TARGETS,
-        "formatted": compile::list_supported_targets()
+        "targets": targets,
+        "formatted": manifest.format_targets()
     }))
 }
 
